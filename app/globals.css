@@ -1,0 +1,165 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-display: var(--font-display), "Bricolage Grotesque", system-ui, sans-serif;
+    --font-sans: var(--font-sans), "DM Sans", system-ui, sans-serif;
+    --font-mono: var(--font-mono), "DM Mono", monospace;
+
+    --color-brand: #E84210;
+    --color-brand-hover: #CC3A0C;
+    --color-brand-light: #FF5A2C;
+    --color-brand-bg: #FFF3EE;
+
+    --color-surface-dark: var(--surface-dark);
+    --color-surface-dark-2: var(--surface-dark-2);
+    --color-surface-dark-3: var(--surface-dark-3);
+    
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --radius-sm: var(--radius-sm);
+    --radius-md: var(--radius-md);
+    --radius-lg: var(--radius-lg);
+    --radius-xl: var(--radius-xl);
+    --radius-2xl: var(--radius-2xl);
+    --radius-full: 9999px;
+
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-brand: 0 4px 20px rgba(232,66,16,0.30);
+}
+
+:root {
+    /* Brand Colors */
+    --brand: #E84210;
+    --brand-hover: #CC3A0C;
+    --brand-light: #FF5A2C;
+    --brand-bg: #FFF3EE;
+
+    /* Surfaces */
+    --surface-dark: #0D0D0D;
+    --surface-dark-2: #1A1A1A;
+    --surface-dark-3: #242424;
+
+    /* Shadcn/UI Variables mapped to design system */
+    --background: #F9F9F9;
+    --foreground: #131313;
+    
+    --card: #FFFFFF;
+    --card-foreground: #131313;
+    
+    --popover: #FFFFFF;
+    --popover-foreground: #131313;
+    
+    --primary: #E84210;
+    --primary-foreground: #FFFFFF;
+    
+    --secondary: #F4F4F4;
+    --secondary-foreground: #131313;
+    
+    --muted: #F4F4F4;
+    --muted-foreground: #6B6B6B;
+    
+    --accent: #F4F4F4;
+    --accent-foreground: #131313;
+    
+    --destructive: #EF4444;
+    --destructive-foreground: #FFFFFF;
+    
+    --border: #E8E8E8;
+    --input: #E8E8E8;
+    --ring: #E84210;
+
+    --radius-sm: 0.375rem;
+    --radius-md: 0.625rem;
+    --radius-lg: 0.875rem;
+    --radius-xl: 1.25rem;
+    --radius-2xl: 1.75rem;
+    
+    /* Animation tokens from tw-animate-css if needed */
+}
+
+.dark {
+    --background: #0D0D0D;
+    --foreground: #FFFFFF;
+    
+    --card: #1A1A1A;
+    --card-foreground: #FFFFFF;
+    
+    --popover: #1A1A1A;
+    --popover-foreground: #FFFFFF;
+    
+    --primary: #FF5A2C;
+    --primary-foreground: #FFFFFF;
+    
+    --secondary: #242424;
+    --secondary-foreground: #FFFFFF;
+    
+    --muted: #242424;
+    --muted-foreground: rgba(255,255,255,0.65);
+    
+    --accent: #242424;
+    --accent-foreground: #FFFFFF;
+    
+    --destructive: #EF4444;
+    --destructive-foreground: #FFFFFF;
+    
+    --border: rgba(255,255,255,0.06);
+    --input: rgba(255,255,255,0.1);
+    --ring: #FF5A2C;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground font-sans;
+    }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+    }
+}
+
+/* Custom logo marquee animation */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+.mask-marquee {
+  mask-image: linear-gradient(to right, transparent 0%, #000 15%, #000 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 15%, #000 85%, transparent 100%);
+}

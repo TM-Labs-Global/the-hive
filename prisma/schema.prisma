@@ -1,0 +1,37 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model WaitlistSignup {
+  id                Int       @id @default(autoincrement())
+  email             String
+  sourceInput       String?   // Website URL or null for manual
+  inputType         InputType
+  status            JobStatus @default(PENDING)
+  rawExtractedText  String?   @db.Text
+  dnaJson           Json?
+  mdFileUrl         String?   // Local relative URL: /generated-dna/{id}.md
+  isLikelyBusinessEmail Boolean   @default(false)
+  faviconUrl        String?
+  errorMessage      String?
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+}
+
+enum InputType {
+  WEBSITE
+  MANUAL
+}
+
+enum JobStatus {
+  PENDING
+  EXTRACTING
+  GENERATING
+  DONE
+  FAILED
+}
