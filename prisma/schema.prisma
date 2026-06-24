@@ -15,6 +15,7 @@ model WaitlistSignup {
   status            JobStatus @default(PENDING)
   rawExtractedText  String?   @db.Text
   dnaJson           Json?
+  answersJson       Json?     // Interactive Discovery Workbook answers
   mdFileUrl         String?   // Local relative URL: /generated-dna/{id}.md
   isLikelyBusinessEmail Boolean   @default(false)
   faviconUrl        String?
@@ -23,9 +24,11 @@ model WaitlistSignup {
   completedAt       DateTime?
 }
 
+
 enum InputType {
   WEBSITE
   MANUAL
+  QUESTIONNAIRE
 }
 
 enum JobStatus {

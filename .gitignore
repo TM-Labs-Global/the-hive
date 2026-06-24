@@ -37,3 +37,8 @@ next-env.d.ts
 
 *storybook.log
 storybook-static
+
+# generated files
+/public/generated-dna/
+docs/*.txt
+docs/extract_pdfs.py

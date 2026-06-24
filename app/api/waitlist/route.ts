@@ -39,7 +39,7 @@ function extractDomain(input: string): string | null {
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, sourceInput, inputType } = await req.json()
+    const { id, email, sourceInput, inputType, answersJson } = await req.json()
 
     if (!email || !email.includes("@")) {
       return NextResponse.json({ success: false, error: "A valid email address is required." }, { status: 400 })
@@ -49,10 +49,16 @@ export async function POST(req: NextRequest) {
       throw new Error("DATABASE_URL is not configured in the environment variables.")
     }
 
-    const type = inputType === "WEBSITE" ? InputType.WEBSITE : InputType.MANUAL
+    let type: InputType = InputType.MANUAL
+    if (inputType === "WEBSITE") {
+      type = InputType.WEBSITE
+    } else if (inputType === "QUESTIONNAIRE") {
+      type = InputType.QUESTIONNAIRE
+    }
 
     let faviconUrl: string | null = null
-    if (type === InputType.WEBSITE && sourceInput) {
+    // If website or questionnaire has a website sourceInput, try to get favicon
+    if (sourceInput && (type === InputType.WEBSITE || type === InputType.QUESTIONNAIRE)) {
       const domain = extractDomain(sourceInput)
       if (domain) {
         faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
@@ -61,16 +67,27 @@ export async function POST(req: NextRequest) {
 
     const isLikelyBusinessEmail = checkIsLikelyBusinessEmail(email)
 
-    const signup = await prisma.waitlistSignup.create({
-      data: {
-        email: email.trim(),
-        sourceInput: sourceInput ? sourceInput.trim() : null,
-        inputType: type,
-        status: "PENDING",
-        isLikelyBusinessEmail,
-        faviconUrl,
-      },
-    })
+    let signup
+    if (id) {
+      signup = await prisma.waitlistSignup.update({
+        where: { id: Number(id) },
+        data: {
+          answersJson: answersJson || null,
+        },
+      })
+    } else {
+      signup = await prisma.waitlistSignup.create({
+        data: {
+          email: email.trim(),
+          sourceInput: sourceInput ? sourceInput.trim() : null,
+          inputType: type,
+          status: "PENDING",
+          isLikelyBusinessEmail,
+          faviconUrl,
+          answersJson: answersJson || null,
+        },
+      })
+    }
 
     return NextResponse.json({ success: true, id: signup.id })
   } catch (error: any) {

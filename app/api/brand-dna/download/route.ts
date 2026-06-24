@@ -27,7 +27,17 @@ export async function GET(req: NextRequest) {
 
     // Derive a clean brand name for the download filename
     let brandName = "brand"
-    if (signup.sourceInput && signup.inputType === "WEBSITE") {
+    if (signup.inputType === "QUESTIONNAIRE") {
+      const answers = signup.answersJson as Record<string, any> || {}
+      if (answers.businessName) {
+        brandName = answers.businessName.toLowerCase().replace(/[^a-z0-9_-]/g, "")
+      } else if (signup.sourceInput && signup.sourceInput.includes(".")) {
+        try {
+          const url = new URL(signup.sourceInput.startsWith("http") ? signup.sourceInput : `https://${signup.sourceInput}`)
+          brandName = url.hostname.replace("www.", "").split(".")[0]
+        } catch {}
+      }
+    } else if (signup.sourceInput && signup.inputType === "WEBSITE") {
       try {
         const url = new URL(signup.sourceInput.startsWith("http") ? signup.sourceInput : `https://${signup.sourceInput}`)
         brandName = url.hostname.replace("www.", "").split(".")[0]
@@ -39,7 +49,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const filename = `${brandName.toLowerCase()}-brand-dna.md`
+    const filename = `${brandName.toLowerCase()}-brand-strategy.md`
     const filePath = path.join(process.cwd(), "public", "generated-dna", `${id}.md`)
 
     if (!fs.existsSync(filePath)) {

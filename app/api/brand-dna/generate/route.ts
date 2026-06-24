@@ -32,53 +32,91 @@ export async function POST(req: NextRequest) {
       id: dbSignup.id,
       email: dbSignup.email,
       sourceInput: dbSignup.sourceInput || "",
-      inputType: dbSignup.inputType as "WEBSITE" | "MANUAL"
+      inputType: dbSignup.inputType as "WEBSITE" | "MANUAL" | "QUESTIONNAIRE"
     }
 
-    // 2. Run scraping/extraction
-    await prisma.waitlistSignup.update({
-      where: { id: signupId },
-      data: { status: "EXTRACTING" },
-    })
-
-    const inputData = signup.sourceInput || ""
-    const extractor = resolveExtractor(signup.inputType)
-    
     let extractedText = ""
-    try {
-      const result = await extractor.extract(inputData)
-      extractedText = result.rawText
-    } catch (scrapingError: any) {
-      console.warn("Extraction failed, flagging for user fallback:", scrapingError)
+
+    if (signup.inputType === "QUESTIONNAIRE") {
+      // Build LLM input context from questionnaire answers
+      const answers = dbSignup.answersJson as Record<string, any> || {}
+      let textParts = []
+
+      textParts.push("--- BRAND DISCOVERY WORKBOOK RESPONSES ---")
+      for (const [key, value] of Object.entries(answers)) {
+        textParts.push(`[QUESTION: ${key}]`)
+        textParts.push(typeof value === "object" ? JSON.stringify(value) : String(value))
+        textParts.push("")
+      }
+
+      if (dbSignup.rawExtractedText) {
+        textParts.push("--- BACKGROUND WEBSITE SCRAPED CONTENT ---")
+        textParts.push(dbSignup.rawExtractedText)
+      }
+
+      extractedText = textParts.join("\n")
+
+      // Update to GENERATING directly
+      await prisma.waitlistSignup.update({
+        where: { id: signupId },
+        data: { status: "GENERATING" },
+      })
+    } else {
+      // 2. Run scraping/extraction
+      await prisma.waitlistSignup.update({
+        where: { id: signupId },
+        data: { status: "EXTRACTING" },
+      })
+
+      const inputData = signup.sourceInput || ""
+      const extractor = resolveExtractor(signup.inputType as "WEBSITE" | "MANUAL")
+      
+      try {
+        const result = await extractor.extract(inputData)
+        extractedText = result.rawText
+      } catch (scrapingError: any) {
+        console.warn("Extraction failed, flagging for user fallback:", scrapingError)
+        await prisma.waitlistSignup.update({
+          where: { id: signupId },
+          data: {
+            status: "FAILED",
+            errorMessage: scrapingError.message || "Extraction failed",
+          },
+        })
+
+        return NextResponse.json({
+          success: false,
+          error: scrapingError.message || "Scraping failed.",
+          code: "FALLBACK_TO_MANUAL"
+        }, { status: 422 })
+      }
+
+      // Update to GENERATING and save rawExtractedText
       await prisma.waitlistSignup.update({
         where: { id: signupId },
         data: {
-          status: "FAILED",
-          errorMessage: scrapingError.message || "Extraction failed",
+          status: "GENERATING",
+          rawExtractedText: extractedText,
         },
       })
-
-      return NextResponse.json({
-        success: false,
-        error: scrapingError.message || "Scraping failed.",
-        code: "FALLBACK_TO_MANUAL"
-      }, { status: 422 })
     }
-
-    // 3. Call DeepSeek LLM
-    await prisma.waitlistSignup.update({
-      where: { id: signupId },
-      data: {
-        status: "GENERATING",
-        rawExtractedText: extractedText,
-      },
-    })
 
     const dna = await generateBrandDNA(extractedText)
 
     // Derive a clean brand name
     let brandName = "Your Brand"
-    if (signup.sourceInput && signup.inputType === "WEBSITE") {
+    if (signup.inputType === "QUESTIONNAIRE") {
+      const answers = dbSignup.answersJson as Record<string, any> || {}
+      if (answers.businessName) {
+        brandName = answers.businessName
+      } else if (signup.sourceInput && signup.sourceInput.includes(".")) {
+        try {
+          const url = new URL(signup.sourceInput.startsWith("http") ? signup.sourceInput : `https://${signup.sourceInput}`)
+          const parts = url.hostname.replace("www.", "").split(".")
+          brandName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1)
+        } catch {}
+      }
+    } else if (signup.sourceInput && signup.inputType === "WEBSITE") {
       try {
         const url = new URL(signup.sourceInput.startsWith("http") ? signup.sourceInput : `https://${signup.sourceInput}`)
         const parts = url.hostname.replace("www.", "").split(".")
