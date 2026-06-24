@@ -3,8 +3,6 @@ import { prisma } from "@/lib/db/client"
 import { resolveExtractor } from "@/lib/extractors/resolve-extractor"
 import { generateBrandDNA } from "@/lib/llm/deepseek-client"
 import { renderBrandDNAMarkdown } from "@/lib/render/brand-dna-markdown"
-import fs from "fs"
-import path from "path"
 
 export async function POST(req: NextRequest) {
   let signupId: number | null = null
@@ -130,24 +128,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Render Markdown & Write to public folder
+    // 4. Render Markdown
     const markdownContent = renderBrandDNAMarkdown(dna, brandName)
-    
-    const dir = path.join(process.cwd(), "public", "generated-dna")
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
+    const fileUrl = `/api/brand-dna/download?id=${signupId}`
 
-    const filePath = path.join(dir, `${signupId}.md`)
-    fs.writeFileSync(filePath, markdownContent, "utf-8")
-    const fileUrl = `/generated-dna/${signupId}.md`
-
-    // 5. Update DB record to DONE
+    // 5. Update DB record to DONE and save rawMarkdown
     await prisma.waitlistSignup.update({
       where: { id: signupId },
       data: {
         status: "DONE",
         dnaJson: dna as any,
+        rawMarkdown: markdownContent,
         mdFileUrl: fileUrl,
         completedAt: new Date(),
       },

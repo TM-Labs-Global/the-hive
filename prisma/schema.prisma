@@ -16,6 +16,7 @@ model WaitlistSignup {
   rawExtractedText  String?   @db.Text
   dnaJson           Json?
   answersJson       Json?     // Interactive Discovery Workbook answers
+  rawMarkdown       String?   @db.Text  // The rendered Markdown strategy document
   mdFileUrl         String?   // Local relative URL: /generated-dna/{id}.md
   isLikelyBusinessEmail Boolean   @default(false)
   faviconUrl        String?

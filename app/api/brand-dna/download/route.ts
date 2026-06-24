@@ -50,15 +50,23 @@ export async function GET(req: NextRequest) {
     }
 
     const filename = `${brandName.toLowerCase()}-brand-strategy.md`
-    const filePath = path.join(process.cwd(), "public", "generated-dna", `${id}.md`)
-
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ success: false, error: "Physical file does not exist on disk." }, { status: 404 })
+    
+    // First try database-backed markdown content
+    let markdown = signup.rawMarkdown
+    
+    // Fallback to checking local file on disk for backwards compatibility in development/existing records
+    if (!markdown) {
+      const filePath = path.join(process.cwd(), "public", "generated-dna", `${id}.md`)
+      if (fs.existsSync(filePath)) {
+        markdown = fs.readFileSync(filePath, "utf-8")
+      }
     }
 
-    const fileBuffer = fs.readFileSync(filePath)
-    
-    return new Response(fileBuffer, {
+    if (!markdown) {
+      return NextResponse.json({ success: false, error: "Strategy content does not exist." }, { status: 404 })
+    }
+
+    return new Response(Buffer.from(markdown, "utf-8"), {
       headers: {
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Type": "text/markdown; charset=utf-8",
