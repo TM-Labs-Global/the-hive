@@ -119,5 +119,7 @@ JSON Structure:
   "doNotSay": ["3-5 topics, phrases, or tone styles to avoid (e.g., 'political jargon', 'unrealistic guarantees')"]
 }
 
-Ensure your response is valid, fully-formed JSON and that all fields are populated with strategic, context-rich prose. Do not return placeholders. If the source text is sparse, make creative, highly professional, and sector-relevant strategic inferences that elevate the brand's positioning.`
+Ensure your response is valid, fully-formed JSON and that all fields are populated with strategic, context-rich prose. Do not return placeholders. If the source text is sparse, make creative, highly professional, and sector-relevant strategic inferences that elevate the brand's positioning.
+
+CRITICAL PERFORMANCE REQUIREMENT: To prevent request timeouts, you must keep all text descriptions, explanations, and rationales extremely concise. Keep every descriptive paragraph or overview to a maximum of 2 sentences, and keep every list item or bullet point to a maximum of 1 sentence. Avoid any unnecessary wordiness or fluff while maintaining high strategic quality.`
 
