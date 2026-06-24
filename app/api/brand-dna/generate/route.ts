@@ -4,6 +4,8 @@ import { resolveExtractor } from "@/lib/extractors/resolve-extractor"
 import { generateBrandDNA } from "@/lib/llm/deepseek-client"
 import { renderBrandDNAMarkdown } from "@/lib/render/brand-dna-markdown"
 
+export const maxDuration = 60 // Allow up to 60 seconds on Vercel Pro
+
 export async function POST(req: NextRequest) {
   let signupId: number | null = null
 

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db/client"
 import { WebsiteExtractor } from "@/lib/extractors/website-extractor"
 import { generatePrefillData } from "@/lib/llm/deepseek-client"
 
+export const maxDuration = 60 // Allow up to 60 seconds on Vercel Pro
+
 export async function POST(req: NextRequest) {
   try {
     const { inputType, sourceInput, signupId } = await req.json()
