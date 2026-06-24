@@ -1,11 +1,34 @@
 import OpenAI from "openai"
 import { BrandDNA } from "@/types/brand-dna"
 import { BRAND_DNA_SYSTEM_PROMPT } from "./brand-dna-prompt"
+import { BRAND_DNA_PREFILL_SYSTEM_PROMPT } from "./brand-dna-prefill-prompt"
 
 const deepseek = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_compilation",
   baseURL: "https://api.deepseek.com",
 })
+
+export async function generatePrefillData(rawText: string): Promise<Record<string, any>> {
+  if (!process.env.DEEPSEEK_API_KEY) {
+    throw new Error("DEEPSEEK_API_KEY is not configured in the environment variables.")
+  }
+
+  const completion = await deepseek.chat.completions.create({
+    model: "deepseek-chat",
+    messages: [
+      { role: "system", content: BRAND_DNA_PREFILL_SYSTEM_PROMPT },
+      { role: "user", content: rawText },
+    ],
+    response_format: { type: "json_object" },
+  })
+
+  const content = completion.choices[0].message.content
+  if (!content) {
+    throw new Error("Empty response received from DeepSeek API.")
+  }
+
+  return JSON.parse(content)
+}
 
 export async function generateBrandDNA(rawText: string): Promise<BrandDNA> {
   if (!process.env.DEEPSEEK_API_KEY) {

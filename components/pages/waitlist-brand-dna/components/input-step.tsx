@@ -198,7 +198,11 @@ export function InputStep({
           disabled={isLoading}
           className="w-full h-14 bg-brand hover:bg-brand-dark text-white font-black rounded-2xl shadow-lg shadow-brand/20 flex items-center justify-center gap-2 text-base transition-all active:scale-98 disabled:opacity-50"
         >
-          {isLoading ? "Processing..." : "Generate Brand DNA"}
+          {isLoading ? (
+            tab === "website" 
+              ? "Analyzing website & pre-filling workbook..." 
+              : "Analyzing description & pre-filling workbook..."
+          ) : "Generate Brand DNA"}
           {!isLoading && <ArrowRight size={18} />}
         </Button>
       </form>

@@ -23,6 +23,7 @@ export default function WaitlistBrandDNAPage() {
     rawScrapedText?: string
     inferredBrandName?: string
     inferredDescription?: string
+    prefilledAnswers?: Record<string, any>
   }>({})
 
   // Handle step 1 submission (warm-up intake)
@@ -51,47 +52,34 @@ export default function WaitlistBrandDNAPage() {
       const { id } = await waitlistRes.json()
       setSignupId(id)
 
-      // Derive initial brand name guess from domain or email if available
-      let inferredName = ""
-      if (data.sourceInput && data.inputType === "WEBSITE") {
-        try {
-          const url = new URL(data.sourceInput.startsWith("http") ? data.sourceInput : `https://${data.sourceInput}`)
-          const parts = url.hostname.replace("www.", "").split(".")
-          inferredName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1)
-        } catch {}
+      // 2. Perform scraping & pre-fill extraction synchronously
+      const scrapeRes = await fetch("/api/brand-dna/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inputType: data.inputType,
+          sourceInput: data.sourceInput,
+          signupId: id
+        }),
+      })
+
+      if (!scrapeRes.ok) {
+        const errorJson = await scrapeRes.json()
+        throw new Error(errorJson.error || "Extraction failed.")
       }
 
+      const scrapeResult = await scrapeRes.json()
+
+      // Set the full pre-populated context
       setPrefilledContext({
-        inferredBrandName: inferredName,
-        inferredDescription: data.inputType === "MANUAL" ? data.sourceInput : ""
+        rawScrapedText: scrapeResult.rawText,
+        inferredBrandName: scrapeResult.prefilledAnswers?.businessName || "",
+        inferredDescription: scrapeResult.prefilledAnswers?.foundingProblem || "",
+        prefilledAnswers: scrapeResult.prefilledAnswers
       })
 
       // Move to step 2 (Interactive discovery workbook questionnaire)
       setStep(2)
-
-      // Start silent background scraping if input is a website URL
-      if (data.inputType === "WEBSITE" && data.sourceInput) {
-        // We trigger it asynchronously without awaiting
-        fetch("/api/brand-dna/scrape", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: data.sourceInput, signupId: id }),
-        })
-          .then((res) => {
-            if (res.ok) return res.json()
-            throw new Error("Scrape failed")
-          })
-          .then((result) => {
-            if (result.success && result.rawText) {
-              setPrefilledContext((prev) => ({
-                ...prev,
-                rawScrapedText: result.rawText,
-                inferredDescription: result.rawText.slice(0, 300) + "..."
-              }))
-            }
-          })
-          .catch((err) => console.warn("Background warm-up scrape was unsuccessful:", err))
-      }
     } catch (err: any) {
       console.error(err)
       toast.error("Intake Error", {

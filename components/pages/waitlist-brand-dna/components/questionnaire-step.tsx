@@ -60,6 +60,7 @@ interface QuestionnaireStepProps {
     rawScrapedText?: string
     inferredBrandName?: string
     inferredDescription?: string
+    prefilledAnswers?: Record<string, any>
   }
 }
 
@@ -90,11 +91,28 @@ export function QuestionnaireStep({ onSubmit, isLoading, prefilledContext }: Que
   // Prefill when context is available
   React.useEffect(() => {
     if (prefilledContext) {
-      setAnswers((prev) => ({
-        ...prev,
-        businessName: prefilledContext.inferredBrandName || prev.businessName,
-        foundingProblem: prefilledContext.inferredDescription || prev.foundingProblem
-      }))
+      setAnswers((prev) => {
+        const prefilled = prefilledContext.prefilledAnswers || {}
+        return {
+          ...prev,
+          businessName: prefilled.businessName || prefilledContext.inferredBrandName || prev.businessName,
+          foundingProblem: prefilled.foundingProblem || prefilledContext.inferredDescription || prev.foundingProblem,
+          businessStage: prefilled.businessStage || prev.businessStage,
+          targetAudience: prefilled.targetAudience || prev.targetAudience,
+          aspirationalNeighboursText: prefilled.aspirationalNeighboursText || prev.aspirationalNeighboursText,
+          competitorsText: prefilled.competitorsText || prev.competitorsText,
+          coreOfferings: prefilled.coreOfferings || prev.coreOfferings,
+          differentiationText: prefilled.differentiationText || prev.differentiationText,
+          proposedJourney: prefilled.proposedJourney || prev.proposedJourney,
+          selectedPersonalityWords: prefilled.selectedPersonalityWords || prev.selectedPersonalityWords,
+          selectedVoiceWords: prefilled.selectedVoiceWords || prev.selectedVoiceWords,
+          dominantArchetype: prefilled.dominantArchetype || prev.dominantArchetype,
+          selectedCultureWords: prefilled.selectedCultureWords || prev.selectedCultureWords,
+          futureOutlook: prefilled.futureOutlook || prev.futureOutlook,
+          strategicSteps: prefilled.strategicSteps || prev.strategicSteps,
+          brandPromiseText: prefilled.brandPromiseText || prev.brandPromiseText,
+        }
+      })
     }
   }, [prefilledContext])
 
