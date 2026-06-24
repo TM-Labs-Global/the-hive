@@ -1,5 +1,3 @@
-import { JSDOM } from "jsdom"
-import { Readability } from "@mozilla/readability"
 import { Extractor, ExtractorResult } from "./types"
 import { InputType } from "@prisma/client"
 
@@ -33,32 +31,8 @@ export class WebsiteExtractor implements Extractor {
       }
 
       const html = await response.text()
-      const dom = new JSDOM(html, { url: urlString })
-      const doc = dom.window.document
+      const cleanText = cleanHtml(html)
 
-      // Extract readability content
-      const reader = new Readability(doc)
-      const article = reader.parse()
-
-      if (!article || !article.textContent) {
-        // Fallback to custom paragraph / text aggregation if Readability fails
-        const textElements = Array.from(doc.querySelectorAll("p, h1, h2, h3, h4, li"))
-          .map((el) => el.textContent?.trim() ?? "")
-          .filter((t) => t.length > 0)
-
-        const joined = textElements.join("\n")
-        if (joined.length < 100) {
-          throw new Error("Unable to extract sufficient text content from this website.")
-        }
-
-        return {
-          rawText: joined,
-          sourceType: InputType.WEBSITE,
-          sourceUrl: urlString,
-        }
-      }
-
-      const cleanText = `${article.title ?? ""}\n\n${article.textContent.trim()}`
       if (cleanText.replace(/\s+/g, "").length < 100) {
         throw new Error("Extracted website content is too short to generate Brand DNA.")
       }
@@ -73,4 +47,34 @@ export class WebsiteExtractor implements Extractor {
       throw new Error(error.message || "Failed to parse website content. Please ensure it is a valid, public URL.")
     }
   }
+}
+
+function cleanHtml(html: string): string {
+  // Remove script and style tags and their contents
+  let text = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+  text = text.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+  
+  // Remove HTML comments
+  text = text.replace(/<!--[\s\S]*?-->/g, "")
+  
+  // Replace block elements with newlines to preserve spacing
+  text = text.replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|tr)>/gi, "\n")
+  
+  // Strip all other HTML tags
+  text = text.replace(/<[^>]+>/g, " ")
+  
+  // Decode common HTML entities
+  text = text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    
+  // Collapse whitespace
+  text = text.replace(/[ \t]+/g, " ")
+  text = text.replace(/\n\s*\n/g, "\n\n")
+  
+  return text.trim()
 }
