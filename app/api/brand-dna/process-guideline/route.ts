@@ -388,7 +388,7 @@ Do not include any other markdown, wrapper, or text.`
       }
     }
 
-    // Generate Mockups in Parallel
+    // Generate Mockups: Create pending GeneratedMockup records for asynchronous processing
     const templates = await prisma.mockupTemplate.findMany({ where: { active: true } })
     
     const pickTemplate = (category: string) => {
@@ -397,90 +397,56 @@ Do not include any other markdown, wrapper, or text.`
       return candidates[dbSignup.id % candidates.length]
     }
 
-    let apparelUrl = null
-    let toteBagUrl = null
-    let keychainUrl = null
-    let billboardUrl = null
-    let doorHangerUrl = null
+    const apparelTemplate = pickTemplate("apparel")
+    const toteTemplate = pickTemplate("apparel")
+    const keychainTemplate = pickTemplate("physical")
+    const billboardTemplate = pickTemplate("environment")
+    const hangerTemplate = pickTemplate("physical")
 
     if (logoUrl) {
-      console.log("Compositing all mockups in parallel...")
-      // Note: Prisma client still reflects old schema until migration runs.
-      // Cast to `any` here to bridge the gap — once `prisma migrate dev` runs and
-      // `prisma generate` regenerates the client, these casts can be removed.
-      const [apparelRes, toteBagRes, keychainRes, billboardRes, doorHangerRes] = await Promise.all([
-        (async () => {
-          const apparelTemplate = pickTemplate("apparel")
-          if (!apparelTemplate) return null
-          try {
-            const buffer = await compositeMockup(apparelTemplate as any, logoUrl, brandColorHex)
-            return await uploadAsset(buffer, "mockup_apparel.png", dbSignup.id)
-          } catch (e) {
-            console.error("Apparel composition failed:", e)
-            return null
-          }
-        })(),
-        (async () => {
-          const toteTemplate = pickTemplate("apparel")
-          if (!toteTemplate) return null
-          try {
-            const buffer = await compositeMockup(toteTemplate as any, logoUrl, brandColorHex)
-            return await uploadAsset(buffer, "mockup_totebag.png", dbSignup.id)
-          } catch (e) {
-            console.error("Tote bag composition failed:", e)
-            return null
-          }
-        })(),
-        (async () => {
-          const keychainTemplate = pickTemplate("physical")
-          if (!keychainTemplate) return null
-          try {
-            const buffer = await compositeMockup(keychainTemplate as any, logoUrl, brandColorHex)
-            return await uploadAsset(buffer, "mockup_keychain.png", dbSignup.id)
-          } catch (e) {
-            console.error("Keychain composition failed:", e)
-            return null
-          }
-        })(),
-        (async () => {
-          const billboardTemplate = pickTemplate("environment")
-          if (!billboardTemplate) return null
-          try {
-            const buffer = await compositeMockup(billboardTemplate as any, logoUrl, brandColorHex)
-            return await uploadAsset(buffer, "mockup_billboard.png", dbSignup.id)
-          } catch (e) {
-            console.error("Billboard composition failed:", e)
-            return null
-          }
-        })(),
-        (async () => {
-          const hangerTemplate = pickTemplate("physical")
-          if (!hangerTemplate) return null
-          try {
-            const buffer = await compositeMockup(hangerTemplate as any, logoUrl, brandColorHex)
-            return await uploadAsset(buffer, "mockup_doorhanger.png", dbSignup.id)
-          } catch (e) {
-            console.error("Door hanger composition failed:", e)
-            return null
-          }
-        })()
-      ])
+      console.log("Initializing GeneratedMockup pending records...")
+      const mockupsToCreate = [
+        { template: apparelTemplate },
+        { template: toteTemplate },
+        { template: keychainTemplate },
+        { template: billboardTemplate },
+        { template: hangerTemplate }
+      ]
 
-      apparelUrl = apparelRes
-      toteBagUrl = toteBagRes
-      keychainUrl = keychainRes
-      billboardUrl = billboardRes
-      doorHangerUrl = doorHangerRes
+      for (const item of mockupsToCreate) {
+        if (item.template) {
+          await prisma.generatedMockup.upsert({
+            where: {
+              waitlistId_templateId_logoVersion: {
+                waitlistId: dbSignup.id,
+                templateId: item.template.templateId,
+                logoVersion: logoUrl
+              }
+            },
+            create: {
+              waitlistId: dbSignup.id,
+              templateId: item.template.templateId,
+              logoVersion: logoUrl,
+              status: "pending"
+            },
+            update: {
+              status: "pending",
+              resultUrl: null,
+              errorMessage: null
+            }
+          })
+        }
+      }
     }
 
     const mockupUrls = {
       logoOnDark: logoOnDarkUrl,
       logoMono: logoMonoUrl,
-      apparel: apparelUrl,
-      toteBag: toteBagUrl,
-      keychain: keychainUrl,
-      billboard: billboardUrl,
-      doorHanger: doorHangerUrl
+      apparel: null,
+      toteBag: null,
+      keychain: null,
+      billboard: null,
+      doorHanger: null
     }
 
     // 6. Save results to Database

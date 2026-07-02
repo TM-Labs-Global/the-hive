@@ -4,9 +4,7 @@ import Link from "next/link"
 import { prisma } from "@/lib/db/client"
 import { mapDnaToTemplate } from "@/lib/visualIdentity/mapDnaToTemplate"
 import { VisualIdentityPolling } from "@/components/pages/waitlist-brand-dna/components/visual-identity-polling"
-import { BusinessCards } from "@/components/mockups/BusinessCard/BusinessCards"
-import { AppIcon } from "@/components/mockups/AppIcon/AppIcon"
-import { SocialPosts } from "@/components/mockups/SocialPost/SocialPosts"
+import { MockupsSection } from "@/components/pages/waitlist-brand-dna/components/mockups-section"
 import { 
   ArrowLeft, 
   Sparkles, 
@@ -726,156 +724,15 @@ export default async function VisualIdentityPage({ params }: { params: Promise<{
         </section>
 
         {/* SECTION 8: BRAND MOCKUPS */}
-        <section className="space-y-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-zinc-500">
-              <Layout size={18} />
-              <span className="text-xs font-black uppercase tracking-widest">5.0 Digital Mockups & Collaterals</span>
-            </div>
-          </div>
-
-          {/* Business Cards & Mobile App Icon */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-4">
-              <h4 className="font-brand-heading text-sm font-bold text-zinc-700 flex items-center gap-2">
-                <ChevronRight size={14} className="text-brand" /> Business Stationary Systems
-              </h4>
-              <BusinessCards 
-                logoUrl={vi.logoUrl} 
-                brandName={content.brandName} 
-                brandColor={brandColor} 
-                fontPair={{ heading: fontPair.headingName, body: fontPair.bodyName }}
-                tagline={content.slogan}
-                email={signup.email}
-              />
-            </div>
-            
-            <div className="space-y-4 flex flex-col items-center">
-              <h4 className="font-brand-heading text-sm font-bold text-zinc-700 self-start flex items-center gap-2">
-                <ChevronRight size={14} className="text-brand" /> Application Glyph
-              </h4>
-              <div className="bg-white border border-zinc-200/80 shadow-sm rounded-3xl w-full h-[222px] flex items-center justify-center">
-                <AppIcon 
-                  logoUrl={vi.logoUrl} 
-                  brandName={content.brandName} 
-                  brandColor={brandColor} 
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Social Posts Showcase */}
-          <div className="space-y-4">
-            <h4 className="font-brand-heading text-sm font-bold text-zinc-700 flex items-center gap-2">
-              <ChevronRight size={14} className="text-brand" /> Social Templates
-            </h4>
-            <SocialPosts 
-              logoUrl={vi.logoUrl} 
-              brandName={content.brandName} 
-              brandColor={brandColor} 
-              tagline={content.slogan}
-            />
-          </div>
-
-          {/* Merch Compositions */}
-          <div className="space-y-4">
-            <h4 className="font-brand-heading text-sm font-bold text-zinc-700 flex items-center gap-2">
-              <ChevronRight size={14} className="text-brand" /> Merch, Apparel, & Physical Environments
-            </h4>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Apparel */}
-              <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm flex flex-col h-[320px]">
-                <div className="flex-1 bg-zinc-100 relative flex items-center justify-center">
-                  {mockups.apparel ? (
-                    <img src={mockups.apparel} alt="Branded Apparel" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center text-zinc-400 gap-1.5">
-                      <ImageIcon size={28} />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">Apparel Mockup</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 border-t border-zinc-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-700">Custom Recolored Tee</span>
-                  <span className="text-[9px] uppercase font-black text-brand tracking-widest">Active</span>
-                </div>
-              </div>
-
-              {/* Tote Bag */}
-              <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm flex flex-col h-[320px]">
-                <div className="flex-1 bg-zinc-100 relative flex items-center justify-center">
-                  {mockups.toteBag ? (
-                    <img src={mockups.toteBag} alt="Branded Tote Bag" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center text-zinc-400 gap-1.5">
-                      <ImageIcon size={28} />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">Tote Bag Mockup</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 border-t border-zinc-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-700">Composited Tote Canvas</span>
-                  <span className="text-[9px] uppercase font-black text-brand tracking-widest">Active</span>
-                </div>
-              </div>
-
-              {/* Keychain */}
-              <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm flex flex-col h-[320px]">
-                <div className="flex-1 bg-zinc-100 relative flex items-center justify-center">
-                  {mockups.keychain ? (
-                    <img src={mockups.keychain} alt="Branded Keychain" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center text-zinc-400 gap-1.5">
-                      <ImageIcon size={28} />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">Keychain Mockup</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 border-t border-zinc-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-700">Keychain Tag</span>
-                  <span className="text-[9px] uppercase font-black text-brand tracking-widest">Active</span>
-                </div>
-              </div>
-
-              {/* Urban Billboard */}
-              <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm flex flex-col h-[320px] sm:col-span-2">
-                <div className="flex-1 bg-zinc-100 relative flex items-center justify-center">
-                  {mockups.billboard ? (
-                    <img src={mockups.billboard} alt="Urban Billboard" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center text-zinc-400 gap-1.5">
-                      <ImageIcon size={28} />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">Billboard Mockup</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 border-t border-zinc-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-700">Out of Home (OOH) Urban Signage</span>
-                  <span className="text-[9px] uppercase font-black text-brand tracking-widest">Active</span>
-                </div>
-              </div>
-
-              {/* Door Hanger */}
-              <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm flex flex-col h-[320px]">
-                <div className="flex-1 bg-zinc-100 relative flex items-center justify-center">
-                  {mockups.doorHanger ? (
-                    <img src={mockups.doorHanger} alt="Wooden Door Hanger" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="flex flex-col items-center text-zinc-400 gap-1.5">
-                      <ImageIcon size={28} />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">Wood Signage</span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-4 border-t border-zinc-100 flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-700">Wooden Hanger Tag</span>
-                  <span className="text-[9px] uppercase font-black text-brand tracking-widest">Active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <MockupsSection
+          waitlistId={signup.id}
+          logoUrl={vi.logoUrl}
+          brandName={content.brandName}
+          brandColor={brandColor}
+          fontPair={{ headingName: fontPair.headingName, bodyName: fontPair.bodyName }}
+          tagline={content.slogan}
+          email={signup.email}
+        />
         
       </main>
     </div>

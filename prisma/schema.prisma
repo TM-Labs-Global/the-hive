@@ -71,6 +71,7 @@ model MockupTemplate {
   // true = requires Displace Smart Filter; sharp cannot reproduce this — template is seeded inactive and deferred
   requiresDisplacement Boolean  @default(false)
   active               Boolean  @default(false)    // default false — must be explicitly activated after Photopea verification
+  compositePrompt      String   @default("")       // prompt describing how the logo should sit on this surface for generative compositing
   createdAt            DateTime @default(now())
 }
 
@@ -96,3 +97,16 @@ enum GuidelineStatus {
   FAILED
 }
 
+model GeneratedMockup {
+  id            String   @id @default(cuid())
+  waitlistId    Int
+  templateId    String
+  logoVersion   String   // hash or version stamp of BrandVisualIdentity.logoUrl content
+  resultUrl     String?  @db.Text // Blob URL once generation succeeds
+  status        String   @default("pending") // "pending" | "generating" | "ready" | "failed" | "fallback"
+  errorMessage  String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([waitlistId, templateId, logoVersion])
+}

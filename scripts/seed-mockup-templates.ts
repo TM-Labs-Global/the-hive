@@ -40,10 +40,22 @@ interface ManifestEntry {
   provenance: string
   provenanceNote?: string
   active: boolean // informational only — seed script ignores this, always seeds as active:false
-}const VALID_CATEGORIES = new Set(["apparel", "stationery", "digital", "physical", "environment"])
+}
+const VALID_CATEGORIES = new Set(["apparel", "stationery", "digital", "physical", "environment"])
 const BLOB_PREFIX = "mockup-templates"
 const MANIFEST_PATH = path.join(process.cwd(), "mockup-source-manifest.json")
 const TEMPLATE_DIR = path.join(process.cwd(), "public", "mockup-templates")
+
+const COMPOSITE_PROMPTS: Record<string, string> = {
+  "paper-bag-pavement-active": "Place this logo centered on the paper shopping bag's front panel, matching its paper texture, perspective angle, lighting, and shadows. Do not change the background or anything else in the image.",
+  "fabric-tote-bag-shadows-active": "Place this logo centered on the fabric front of the tote bag, following the fabric's folds, creases, texture, and shadows. Do not change the background or anything else.",
+  "tote-bag-with-people-active": "Place this logo centered on the tote bag's front panel, matching the fabric folds, creases, lighting, and perspective. Do not change the person or background.",
+  "hoodie-neck-label-active": "Place this logo centered on the fabric neck label inside the hoodie collar, matching the woven fabric texture, shadows, and perspective.",
+  "ios-app-icon-iphone17-active": "Place this logo centered on the app icon tile on the phone screen. Place the logo mark cleanly, matching the screen reflection and light highlights.",
+  "retro-tv-screen-active": "Place this logo centered on the retro television screen, matching the glass curvature, phosphor scanlines, reflections, and glow.",
+  "coffee-drip-pouch-active": "Place this logo centered on the coffee pouch front label, matching the paper texture, plastic folds, shadows, and perspective.",
+  "billboard_urban_a": "Place this logo centered on the large city billboard screen, matching the perspective angle, ambient city lighting, shadows, and outdoor texture."
+}
 
 // Recursively find all files in public/mockup-templates
 function getAllFiles(dir: string): string[] {
@@ -155,6 +167,8 @@ async function run() {
       continue
     }
 
+    const compositePrompt = COMPOSITE_PROMPTS[entry.templateId] || "Place this logo centered on the product surface, matching the texture, perspective, lighting, and shadows."
+
     // --- Deferred: displacement template ---
     if (entry.requiresDisplacement) {
       try {
@@ -170,11 +184,13 @@ async function run() {
             blendMode: entry.blendMode,
             layerOpacity: entry.layerOpacity,
             layerFill: entry.layerFill,
+            compositePrompt,
             active: false, // forced inactive because of displacement
           },
           update: {
             category,
             baseImageUrl,
+            compositePrompt,
             active: false,
           },
         })
@@ -207,6 +223,7 @@ async function run() {
           blendMode: entry.blendMode,
           layerOpacity: entry.layerOpacity,
           layerFill: entry.layerFill,
+          compositePrompt,
           active: true, // Seed as active now that we want to use them!
         },
         update: {
@@ -217,6 +234,7 @@ async function run() {
           blendMode: entry.blendMode,
           layerOpacity: entry.layerOpacity,
           layerFill: entry.layerFill,
+          compositePrompt,
           active: true,
         },
       })

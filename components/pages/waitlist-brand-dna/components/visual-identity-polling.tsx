@@ -36,6 +36,8 @@ export function VisualIdentityPolling({ waitlistId, initialStatus }: { waitlistI
         if (json.success && json.status) {
           setStatus(json.status)
           if (json.status === "COMPLETE") {
+            // Asynchronously trigger mockup generation (non-blocking)
+            fetch(`/api/brand-dna/${waitlistId}/mockups`, { method: "POST" }).catch(console.error)
             router.refresh()
             return
           } else if (json.status === "FAILED") {
