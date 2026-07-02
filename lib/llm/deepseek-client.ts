@@ -2,6 +2,7 @@ import OpenAI from "openai"
 import { BrandDNA } from "@/types/brand-dna"
 import { BRAND_DNA_SYSTEM_PROMPT } from "./brand-dna-prompt"
 import { BRAND_DNA_PREFILL_SYSTEM_PROMPT } from "./brand-dna-prefill-prompt"
+import { safeJsonParse } from "./json-parser"
 
 const deepseek = new OpenAI({
   apiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_compilation",
@@ -27,7 +28,7 @@ export async function generatePrefillData(rawText: string): Promise<Record<strin
     throw new Error("Empty response received from DeepSeek API.")
   }
 
-  return JSON.parse(content)
+  return safeJsonParse<Record<string, any>>(content)
 }
 
 export async function generateBrandDNA(rawText: string): Promise<BrandDNA> {
@@ -49,7 +50,7 @@ export async function generateBrandDNA(rawText: string): Promise<BrandDNA> {
     throw new Error("Empty response received from DeepSeek API.")
   }
 
-  const parsed = JSON.parse(content)
+  const parsed = safeJsonParse<BrandDNA>(content)
   
   // Validate shape
   const requiredKeys: (keyof BrandDNA)[] = [

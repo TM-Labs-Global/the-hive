@@ -6,6 +6,7 @@ import { uploadAsset } from "@/lib/storage/client"
 import { sendCompletionEmail } from "@/lib/email/client"
 import sharp from "sharp"
 import { compositeMockup } from "@/lib/visualIdentity/mockup-compositor"
+import { safeJsonParse } from "@/lib/llm/json-parser"
 
 export const maxDuration = 60 // Allow up to 60 seconds on Vercel Pro
 
@@ -252,7 +253,7 @@ Do not include any other markdown, wrapper, or text.`
 
     let brandColorHex = "#18181b"
     try {
-      const parsedColor = JSON.parse(colorResponse.choices[0].message.content?.trim() || "{}")
+      const parsedColor = safeJsonParse<any>(colorResponse.choices[0].message.content?.trim() || "{}")
       let hex = parsedColor.hex || "#18181b"
       if (!hex.startsWith("#")) {
         hex = "#" + hex
