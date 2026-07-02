@@ -38,6 +38,7 @@ model BrandVisualIdentity {
   typographyJson     Json?
 
   logoUrl            String?
+  logoOptions        Json?                // Array of 3 generated logo mark URLs
   imageryUrls        String[]             // 3 Values images
   mockupUrls         Json?                // { businessCards: [...], appIcon, socialFrames: [...], tier2: {...} }
 

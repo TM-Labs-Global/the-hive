@@ -6,6 +6,7 @@ import { DNASummaryCard } from "./dna-summary-card"
 import { BrandDNA } from "@/types/brand-dna"
 import { Download, Calendar, RefreshCw, Sparkles, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { DesignWizard } from "./design-wizard"
 
 interface ResultStepProps {
   dna: BrandDNA
@@ -17,27 +18,19 @@ interface ResultStepProps {
 
 export function ResultStep({ dna, id, brandName, faviconUrl, onRestart }: ResultStepProps) {
   const downloadUrl = `/api/brand-dna/download?id=${id}`
-  const [isInitiating, setIsInitiating] = React.useState(false)
+  const [showWizard, setShowWizard] = React.useState(false)
   const router = useRouter()
 
-  const handleGenerateVisualIdentity = async () => {
-    setIsInitiating(true)
-    try {
-      const res = await fetch(`/api/brand-dna/${id}/visual-identity`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      })
-      if (!res.ok) {
-        const json = await res.json()
-        throw new Error(json.error || "Failed to trigger visual identity generation.")
-      }
-      router.push(`/waitlist/${id}/visual-identity`)
-    } catch (error: any) {
-      console.error(error)
-      alert(error.message || "An error occurred.")
-    } finally {
-      setIsInitiating(false)
-    }
+  const handleGenerateVisualIdentity = () => {
+    setShowWizard(true)
+  }
+
+  if (showWizard) {
+    return (
+      <div className="w-full text-foreground [--foreground:#131313] [--muted-foreground:#6B6B6B] [--border:#E8E8E8] [--muted:#F4F4F4] [--card:#ffffff] [--card-foreground:#131313] [--background:#f9f9f9]">
+        <DesignWizard waitlistId={id} onBackToDna={() => setShowWizard(false)} />
+      </div>
+    )
   }
 
   return (
@@ -61,18 +54,9 @@ export function ResultStep({ dna, id, brandName, faviconUrl, onRestart }: Result
         <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
           <Button
             onClick={handleGenerateVisualIdentity}
-            disabled={isInitiating}
             className="bg-brand hover:bg-brand-hover text-white font-black h-12 px-8 rounded-xl shadow-lg shadow-brand/20 flex items-center gap-2 transition-all active:scale-98"
           >
-            {isInitiating ? (
-              <>
-                <Loader2 size={18} className="animate-spin" /> Preparing Guidelines...
-              </>
-            ) : (
-              <>
-                <Sparkles size={18} /> Generate your Visual Identity →
-              </>
-            )}
+            <Sparkles size={18} /> Generate your Visual Identity →
           </Button>
 
           <Button

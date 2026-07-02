@@ -59,17 +59,8 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Invalid waitlist ID" }, { status: 400 })
     }
 
-    // Rate-limit: reject if visual identity already exists
-    const existing = await prisma.brandVisualIdentity.findUnique({
-      where: { waitlistId },
-    })
-
-    if (existing) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Visual identity generation has already been initiated for this brand." 
-      }, { status: 409 })
-    }
+    const body = await req.json().catch(() => ({}))
+    const { logoUrl, brandColorHex, typographyJson } = body
 
     // Fetch waitlist signup first to verify it exists
     const signup = await prisma.waitlistSignup.findUnique({
@@ -83,11 +74,21 @@ export async function POST(
       }, { status: 400 })
     }
 
-    // Create the visual identity record in PENDING / QUEUED status
-    await prisma.brandVisualIdentity.create({
-      data: {
+    // Create or update the visual identity record in QUEUED status with chosen custom configurations
+    await prisma.brandVisualIdentity.upsert({
+      where: { waitlistId },
+      create: {
         waitlistId,
         status: "QUEUED",
+        logoUrl,
+        brandColorHex,
+        typographyJson: typographyJson || null,
+      },
+      update: {
+        status: "QUEUED",
+        logoUrl,
+        brandColorHex,
+        typographyJson: typographyJson || null,
       },
     })
 

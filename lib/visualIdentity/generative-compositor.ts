@@ -171,15 +171,20 @@ export async function generateMockupGeneratively(
       model: model,
     })
 
-    const resultUrl = response.data?.[0]?.url
-    if (!resultUrl) {
-      throw new Error("OpenAI Images Edit API did not return an image URL.")
-    }
+    const data = response.data?.[0]
+    let editBuffer: Buffer
 
-    console.log(`[GENERATIVE COMPOSITOR] Downloading edited mockup from: ${resultUrl}`)
-    const editRes = await fetch(resultUrl)
-    if (!editRes.ok) throw new Error(`Failed to download edited image from OpenAI: ${editRes.status}`)
-    const editBuffer = Buffer.from(await editRes.arrayBuffer())
+    if (data?.b64_json) {
+      console.log("[GENERATIVE COMPOSITOR] Using base64 image data from OpenAI response...")
+      editBuffer = Buffer.from(data.b64_json, "base64")
+    } else if (data?.url) {
+      console.log(`[GENERATIVE COMPOSITOR] Downloading edited mockup from: ${data.url}`)
+      const editRes = await fetch(data.url)
+      if (!editRes.ok) throw new Error(`Failed to download edited image from OpenAI: ${editRes.status}`)
+      editBuffer = Buffer.from(await editRes.arrayBuffer())
+    } else {
+      throw new Error("No image data (b64_json or url) returned from OpenAI Images Edit API.")
+    }
 
     // 7. Crop the 1024x1024 output back to original aspect ratio
     console.log(`[GENERATIVE COMPOSITOR] Cropping web-optimized output back to original aspect ratio...`)

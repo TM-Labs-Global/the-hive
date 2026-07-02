@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Set status to GENERATING
-    await prisma.brandVisualIdentity.update({
+    const existingVI = await prisma.brandVisualIdentity.update({
       where: { waitlistId: dbSignup.id },
       data: { status: "GENERATING" },
     })
@@ -196,6 +196,10 @@ export async function POST(req: NextRequest) {
 
     const answers = (dbSignup.answersJson as any) || {}
 
+    const host = req.headers.get("host")
+    const protocol = host?.includes("localhost") ? "http" : "https"
+    const appUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")
+
     // Initialize DeepSeek
     const deepseek = new OpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY || "dummy_key_for_compilation",
@@ -203,32 +207,36 @@ export async function POST(req: NextRequest) {
     })
 
     // 1. Archetype Classification
-    console.log("Classifying brand archetype cluster...")
-    const archetypeResponse = await deepseek.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "system",
-          content: "Classify this brand into exactly one archetype cluster from this list: agro_earth, corporate_trust, bold_consumer, premium_luxury, tech_minimal. Respond with only the cluster key, nothing else."
-        },
-        {
-          role: "user",
-          content: `Findings: ${dna.findings?.join(", ") || ""}\nOne Thing: ${dna.oneThing || ""}\nTagline: ${dna.tagline || ""}\nPersonality: ${dna.brandPersonality?.map((p: any) => p.trait).join(", ") || ""}\nVoice: ${dna.brandVoiceText || ""}`
-        }
-      ]
-    })
-    
-    let archetypeCluster = archetypeResponse.choices[0].message.content?.trim() || "tech_minimal"
-    // Normalize response to ensure it maps to one of our clusters
-    const validClusters = ["agro_earth", "corporate_trust", "bold_consumer", "premium_luxury", "tech_minimal"]
-    if (!validClusters.includes(archetypeCluster)) {
-      archetypeCluster = "tech_minimal"
+    let archetypeCluster = existingVI.archetypeCluster
+    if (!archetypeCluster) {
+      console.log("Classifying brand archetype cluster...")
+      const archetypeResponse = await deepseek.chat.completions.create({
+        model: "deepseek-chat",
+        messages: [
+          {
+            role: "system",
+            content: "Classify this brand into exactly one archetype cluster from this list: agro_earth, corporate_trust, bold_consumer, premium_luxury, tech_minimal. Respond with only the cluster key, nothing else."
+          },
+          {
+            role: "user",
+            content: `Findings: ${dna.findings?.join(", ") || ""}\nOne Thing: ${dna.oneThing || ""}\nTagline: ${dna.tagline || ""}\nPersonality: ${dna.brandPersonality?.map((p: any) => p.trait).join(", ") || ""}\nVoice: ${dna.brandVoiceText || ""}`
+          }
+        ]
+      })
+      
+      archetypeCluster = archetypeResponse.choices[0].message.content?.trim() || "tech_minimal"
+      const validClusters = ["agro_earth", "corporate_trust", "bold_consumer", "premium_luxury", "tech_minimal"]
+      if (!validClusters.includes(archetypeCluster)) {
+        archetypeCluster = "tech_minimal"
+      }
     }
     console.log("Classified cluster:", archetypeCluster)
 
     // 2. Brand Color Generation
-    console.log("Generating brand color...")
-    const colorPrompt = `You are a Professional Brand Designer. Given the archetype cluster "${archetypeCluster}" and these personality traits: "${dna.brandPersonality?.map((p: any) => p.trait).join(", ") || ""}", generate exactly one primary brand color matching these guidelines.
+    let brandColorHex = existingVI.brandColorHex || "#18181b"
+    if (!brandColorHex) {
+      console.log("Generating brand color...")
+      const colorPrompt = `You are a Professional Brand Designer. Given the archetype cluster "${archetypeCluster}" and these personality traits: "${dna.brandPersonality?.map((p: any) => p.trait).join(", ") || ""}", generate exactly one primary brand color matching these guidelines.
 Constraints for archetype clusters:
 - agro_earth: Earthy tones (terracotta, olive, warm gold). Hue must be between 20-45 degrees, saturation >= 30%.
 - corporate_trust: Professional tones (deep blues, teals, slate). Hue must be between 195-230 degrees, saturation >= 25%.
@@ -245,44 +253,40 @@ You must return a JSON object with this exact structure:
 }
 Do not include any other markdown, wrapper, or text.`
 
-    const colorResponse = await deepseek.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [{ role: "user", content: colorPrompt }],
-      response_format: { type: "json_object" }
-    })
+      const colorResponse = await deepseek.chat.completions.create({
+        model: "deepseek-chat",
+        messages: [{ role: "user", content: colorPrompt }],
+        response_format: { type: "json_object" }
+      })
 
-    let brandColorHex = "#18181b"
-    try {
-      const parsedColor = safeJsonParse<any>(colorResponse.choices[0].message.content?.trim() || "{}")
-      let hex = parsedColor.hex || "#18181b"
-      if (!hex.startsWith("#")) {
-        hex = "#" + hex
-      }
-      
-      const hsl = hexToHsl(hex)
-      console.log(`DeepSeek generated color: ${hex} (H: ${hsl.h}°, S: ${hsl.s}%, L: ${hsl.l}%)`)
-
-      if (hsl.s < 15 && archetypeCluster !== "tech_minimal") {
-        console.warn(`WARNING: Generated color ${hex} is desaturated (S: ${hsl.s}% < 15%) for non-minimalist archetype "${archetypeCluster}". Triggering fallback color.`)
-        const fallbacks: Record<string, string> = {
-          agro_earth: "#8B5A2B",
-          corporate_trust: "#0F4C81",
-          bold_consumer: "#EE9B00",
-          premium_luxury: "#D4AF37",
-          tech_minimal: "#2B3A4A"
+      try {
+        const parsedColor = safeJsonParse<any>(colorResponse.choices[0].message.content?.trim() || "{}")
+        let hex = parsedColor.hex || "#18181b"
+        if (!hex.startsWith("#")) {
+          hex = "#" + hex
         }
-        brandColorHex = fallbacks[archetypeCluster] || "#18181b"
-      } else {
-        brandColorHex = hex
+        
+        const hsl = hexToHsl(hex)
+        if (hsl.s < 15 && archetypeCluster !== "tech_minimal") {
+          const fallbacks: Record<string, string> = {
+            agro_earth: "#8B5A2B",
+            corporate_trust: "#0F4C81",
+            bold_consumer: "#EE9B00",
+            premium_luxury: "#D4AF37",
+            tech_minimal: "#2B3A4A"
+          }
+          brandColorHex = fallbacks[archetypeCluster] || "#18181b"
+        } else {
+          brandColorHex = hex
+        }
+      } catch (e) {
+        const rawText = colorResponse.choices[0].message.content || ""
+        const match = rawText.match(/#[0-9a-fA-F]{6}/)
+        brandColorHex = match ? match[0] : "#18181b"
       }
-    } catch (e) {
-      console.error("Failed to parse color generation response as JSON, falling back to regex extraction:", e)
-      const rawText = colorResponse.choices[0].message.content || ""
-      const match = rawText.match(/#[0-9a-fA-F]{6}/)
-      brandColorHex = match ? match[0] : "#18181b"
-    }
 
-    brandColorHex = adjustColorForContrast(brandColorHex)
+      brandColorHex = adjustColorForContrast(brandColorHex)
+    }
     console.log(`Final contrast-adjusted color: ${brandColorHex}`)
 
     // 3. Typography pairing JSON
@@ -293,7 +297,7 @@ Do not include any other markdown, wrapper, or text.`
       premium_luxury: { heading: "Fraunces", body: "Inter" },
       tech_minimal: { heading: "Space Grotesk", body: "Inter" },
     }
-    const typographyJson = TYPE_PAIRS[archetypeCluster] || TYPE_PAIRS.tech_minimal
+    const typographyJson = existingVI.typographyJson || TYPE_PAIRS[archetypeCluster] || TYPE_PAIRS.tech_minimal
 
     // 4 & 5. Generate Logo and Values images in parallel
     console.log("Generating logo and values images in parallel...")
@@ -318,16 +322,38 @@ Do not include any other markdown, wrapper, or text.`
       return { valLabel, prompt: photoPrompt }
     })
 
-    // Construct logo prompt
-    const brandNoun = dna.oneThing || brandColorHex
-    const logoPrompt = `A simple, flat, geometric vector icon representing "${brandNoun}". Minimalist style, single accent color ${brandColorHex} on a white background, bold clean shapes, centered composition, modern app icon glyph.`
+    // Logo resolution
+    let logoUrl = existingVI.logoUrl
+    let logoBufferResult: Buffer | null = null
 
-    // Execute logo + 3 values images generation in parallel!
-    const [logoBufferResult, value1Buffer, value2Buffer, value3Buffer] = await Promise.all([
-      generateLogoMark(logoPrompt, brandColorHex, dbSignup.email.split("@")[0]).catch(e => {
-        console.error("Logo generation failed in Promise.all:", e)
-        return null
-      }),
+    if (logoUrl) {
+      console.log(`[PROCESS GUIDELINE] Custom logoUrl already set: ${logoUrl}. Downloading logo buffer...`)
+      try {
+        const fullLogoUrl = logoUrl.startsWith("http") ? logoUrl : `${appUrl}${logoUrl}`
+        const res = await fetch(fullLogoUrl)
+        if (res.ok) {
+          logoBufferResult = Buffer.from(await res.arrayBuffer())
+        } else {
+          console.error(`[PROCESS GUIDELINE] Failed to fetch custom logoUrl: ${res.status}`)
+        }
+      } catch (err) {
+        console.error(`[PROCESS GUIDELINE] Error downloading custom logoUrl:`, err)
+      }
+    }
+
+    // Execute logo mark and values images generation in parallel
+    const [genLogoBuffer, value1Buffer, value2Buffer, value3Buffer] = await Promise.all([
+      // Only generate logo mark if logoUrl was NOT already set
+      !logoUrl 
+        ? (() => {
+            const brandNoun = dna.oneThing || brandColorHex
+            const logoPrompt = `A simple, flat, geometric vector icon representing "${brandNoun}". Minimalist style, single accent color ${brandColorHex} on a white background, bold clean shapes, centered composition, modern app icon glyph.`
+            return generateLogoMark(logoPrompt, brandColorHex, dbSignup.email.split("@")[0])
+          })().catch(e => {
+            console.error("Logo generation failed in Promise.all:", e)
+            return null
+          })
+        : Promise.resolve(null),
       generateValuesImage(valueTasks[0].prompt, valueTasks[0].valLabel, brandColorHex, 0).catch(e => {
         console.error("Value 1 image generation failed in Promise.all:", e)
         return null
@@ -342,18 +368,22 @@ Do not include any other markdown, wrapper, or text.`
       })
     ])
 
-    let logoUrl = ""
+    // If logo was generated, use that buffer
+    if (genLogoBuffer) {
+      logoBufferResult = genLogoBuffer
+    }
+
     let logoOnDarkUrl = ""
     let logoMonoUrl = ""
     
     if (logoBufferResult) {
       try {
-        // Upload Primary Logo (now a transparent PNG after chroma-key removal)
-        logoUrl = await uploadAsset(logoBufferResult, "logo.png", dbSignup.id)
+        // Upload Primary Logo if we generated a new one
+        if (!logoUrl) {
+          logoUrl = await uploadAsset(logoBufferResult, "logo.png", dbSignup.id)
+        }
 
         // Post-process: On Dark — composite transparent mark onto a black fill.
-        // (We no longer use .negate() because it inverted the white background pixels too,
-        //  not just the logo mark. Compositing over black gives a clean white-mark-on-dark result.)
         const onDarkBuffer = await sharp({
           create: { width: 512, height: 512, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 255 } }
         })
@@ -362,8 +392,7 @@ Do not include any other markdown, wrapper, or text.`
           .toBuffer()
         logoOnDarkUrl = await uploadAsset(onDarkBuffer, "logo_ondark.png", dbSignup.id)
 
-        // Post-process: Monochrome — grayscale works correctly on transparent PNG,
-        // only desaturating the mark pixels while preserving transparent areas.
+        // Post-process: Monochrome — grayscale works correctly on transparent PNG
         const monoBuffer = await sharp(logoBufferResult)
           .grayscale()
           .png()
