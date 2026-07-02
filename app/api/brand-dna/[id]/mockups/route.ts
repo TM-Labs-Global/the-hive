@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db/client"
 import { generateMockupGeneratively } from "@/lib/visualIdentity/generative-compositor"
 import { uploadAsset } from "@/lib/storage/client"
+import { getLogoVersion } from "@/lib/visualIdentity/mockup-helper"
 
 async function runGenerationWorker(waitlistId: number, logoUrl: string, brandColorHex: string) {
   // Find all pending or failed mockups for this logo version
   const pending = await prisma.generatedMockup.findMany({
     where: { 
       waitlistId, 
-      logoVersion: logoUrl, 
+      logoVersion: getLogoVersion(logoUrl), 
       status: { in: ["pending", "failed"] } 
     }
   })
@@ -146,7 +147,7 @@ export async function GET(
     }
 
     const mockups = await prisma.generatedMockup.findMany({
-      where: { waitlistId, logoVersion: vi.logoUrl }
+      where: { waitlistId, logoVersion: getLogoVersion(vi.logoUrl) }
     })
 
     const templates = await prisma.mockupTemplate.findMany({

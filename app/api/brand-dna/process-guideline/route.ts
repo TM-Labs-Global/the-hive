@@ -5,8 +5,8 @@ import { generateLogoMark, generateValuesImage } from "@/lib/llm/openai-client"
 import { uploadAsset } from "@/lib/storage/client"
 import { sendCompletionEmail } from "@/lib/email/client"
 import sharp from "sharp"
-import { compositeMockup } from "@/lib/visualIdentity/mockup-compositor"
 import { safeJsonParse } from "@/lib/llm/json-parser"
+import { getLogoVersion } from "@/lib/visualIdentity/mockup-helper"
 
 export const maxDuration = 60 // Allow up to 60 seconds on Vercel Pro
 
@@ -432,41 +432,40 @@ Do not include any other markdown, wrapper, or text.`
     const billboardTemplate = pickTemplate("environment")
     const hangerTemplate = pickTemplate("physical")
 
-    if (logoUrl) {
-      console.log("Initializing GeneratedMockup pending records...")
-      const mockupsToCreate = [
-        { template: apparelTemplate },
-        { template: toteTemplate },
-        { template: keychainTemplate },
-        { template: billboardTemplate },
-        { template: hangerTemplate }
-      ]
-
-      for (const item of mockupsToCreate) {
-        if (item.template) {
-          await prisma.generatedMockup.upsert({
-            where: {
-              waitlistId_templateId_logoVersion: {
+      if (logoUrl) {
+        const logoVersion = getLogoVersion(logoUrl)
+        const mockupsToCreate = [
+          { template: apparelTemplate },
+          { template: toteTemplate },
+          { template: keychainTemplate },
+          { template: billboardTemplate },
+          { template: hangerTemplate }
+        ]
+        for (const item of mockupsToCreate) {
+          if (item.template) {
+            await prisma.generatedMockup.upsert({
+              where: {
+                waitlistId_templateId_logoVersion: {
+                  waitlistId: dbSignup.id,
+                  templateId: item.template.templateId,
+                  logoVersion
+                }
+              },
+              create: {
                 waitlistId: dbSignup.id,
                 templateId: item.template.templateId,
-                logoVersion: logoUrl
+                logoVersion,
+                status: "pending"
+              },
+              update: {
+                status: "pending",
+                resultUrl: null,
+                errorMessage: null
               }
-            },
-            create: {
-              waitlistId: dbSignup.id,
-              templateId: item.template.templateId,
-              logoVersion: logoUrl,
-              status: "pending"
-            },
-            update: {
-              status: "pending",
-              resultUrl: null,
-              errorMessage: null
-            }
-          })
+            })
+          }
         }
       }
-    }
 
     const mockupUrls = {
       logoOnDark: logoOnDarkUrl,

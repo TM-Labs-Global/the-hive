@@ -5,6 +5,7 @@ import { generateLogoMark, generateValuesImage, generatePlaceholderLogo } from "
 import { uploadAsset } from "@/lib/storage/client"
 import { sendCompletionEmail } from "@/lib/email/client"
 import sharp from "sharp"
+import { getLogoVersion } from "@/lib/visualIdentity/mockup-helper"
 
 export const maxDuration = 60 // Allow up to 60 seconds on Vercel Pro
 
@@ -460,6 +461,7 @@ export async function GET(
           ]
 
           if (logoUrl) {
+            const logoVersion = getLogoVersion(logoUrl)
             for (const item of mockupsToCreate) {
               if (item.template) {
                 await prisma.generatedMockup.upsert({
@@ -467,13 +469,13 @@ export async function GET(
                     waitlistId_templateId_logoVersion: {
                       waitlistId,
                       templateId: item.template.templateId,
-                      logoVersion: logoUrl
+                      logoVersion
                     }
                   },
                   create: {
                     waitlistId,
                     templateId: item.template.templateId,
-                    logoVersion: logoUrl,
+                    logoVersion,
                     status: "pending"
                   },
                   update: {
