@@ -23,8 +23,56 @@ model WaitlistSignup {
   errorMessage      String?
   createdAt         DateTime  @default(now())
   completedAt       DateTime?
+  visualIdentity    BrandVisualIdentity?
 }
 
+model BrandVisualIdentity {
+  id                 Int                  @id @default(autoincrement())
+  waitlistId         Int                  @unique
+  waitlist           WaitlistSignup       @relation(fields: [waitlistId], references: [id])
+
+  status             GuidelineStatus      @default(NOT_STARTED)
+  archetypeCluster   String?
+
+  brandColorHex      String?
+  typographyJson     Json?
+
+  logoUrl            String?
+  imageryUrls        String[]             // 3 Values images
+  mockupUrls         Json?                // { businessCards: [...], appIcon, socialFrames: [...], tier2: {...} }
+
+  failureReason      String?
+  emailSentAt        DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+model MockupTemplate {
+  id                   Int      @id @default(autoincrement())
+  templateId           String   @unique
+  // "apparel" | "stationery" | "digital" | "physical" | "environment"
+  category             String
+  // Blob URL — the empty base scene (no logo, no overlay)
+  baseImageUrl         String
+  // Blob URL — optional shadow/reflection/highlight overlay composited ABOVE the logo
+  overlayImageUrl      String?
+  garmentMaskUrl       String?
+
+  // 4-corner perspective quad in pixel coordinates relative to baseImageUrl's actual dimensions.
+  // { topLeft: {x,y}, topRight: {x,y}, bottomRight: {x,y}, bottomLeft: {x,y} }
+  // Null only for requiresDisplacement:true entries (deferred — no quad applicable).
+  logoZoneJson         Json?
+
+  // Design-layer blend settings read from Photopea layer panel
+  blendMode            String   @default("normal") // "normal"|"multiply"|"linear-burn"|"screen"|"overlay"
+  layerOpacity         Int      @default(100)       // 0–100, maps to Photopea Opacity
+  layerFill            Int      @default(100)       // 0–100, maps to Photopea Fill
+
+  // true = requires Displace Smart Filter; sharp cannot reproduce this — template is seeded inactive and deferred
+  requiresDisplacement Boolean  @default(false)
+  active               Boolean  @default(false)    // default false — must be explicitly activated after Photopea verification
+  createdAt            DateTime @default(now())
+}
 
 enum InputType {
   WEBSITE
@@ -39,3 +87,12 @@ enum JobStatus {
   DONE
   FAILED
 }
+
+enum GuidelineStatus {
+  NOT_STARTED
+  QUEUED
+  GENERATING
+  COMPLETE
+  FAILED
+}
+

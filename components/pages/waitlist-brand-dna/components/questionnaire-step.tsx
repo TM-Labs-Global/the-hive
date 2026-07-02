@@ -45,6 +45,7 @@ interface Question {
   type: "text" | "textarea" | "select" | "personality-chips" | "voice-chips" | "archetype-select" | "culture-chips"
   placeholder?: string
   options?: string[]
+  description?: string
 }
 
 interface ActData {
@@ -173,7 +174,8 @@ export function QuestionnaireStep({ onSubmit, isLoading, prefilledContext }: Que
           id: "aspirationalNeighboursText",
           label: "Who are your aspirational neighbours?",
           placeholder: "Name 2-3 brands inside or outside finance/business that you admire. What specifically do you like about them?",
-          type: "textarea"
+          type: "textarea",
+          description: "Aspirational neighbors are brands (in any industry) whose styling, design language, tone of voice, or overall customer experience you admire and want to emulate. For example, if you want your product to feel as simple and premium as Apple or Stripe."
         },
         {
           id: "competitorsText",
@@ -349,6 +351,11 @@ export function QuestionnaireStep({ onSubmit, isLoading, prefilledContext }: Que
             <label className="text-base font-black text-foreground block leading-tight">
               {currentQuestion.label}
             </label>
+            {currentQuestion.description && (
+              <p className="text-xs text-zinc-500 font-medium leading-relaxed">
+                {currentQuestion.description}
+              </p>
+            )}
 
             {/* Render input types dynamically */}
             {currentQuestion.type === "text" && (

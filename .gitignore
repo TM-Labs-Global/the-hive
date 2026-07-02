@@ -40,5 +40,6 @@ storybook-static
 
 # generated files
 /public/generated-dna/
+/public/generated-guidelines/
 docs/*.txt
 docs/extract_pdfs.py

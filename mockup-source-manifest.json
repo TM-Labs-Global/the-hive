@@ -1,0 +1,179 @@
+[
+  {
+    "templateId": "paper-bag-pavement-active",
+    "category": "packaging",
+    "categoryNeedsReview": true,
+    "categoryNote": "Schema enum is apparel | stationery | digital | physical | environment — 'packaging' doesn't exist. Likely 'stationery' but confirm with El-Roy before seeding.",
+    "baseFile": "packaging/01_Paper_Bag_Mockups_2024_DekGrafis.png",
+    "overlayFile": null,
+    "sourceDimensions": [3200, 4000],
+    "logoZone": {
+      "topLeft": { "x": 700, "y": 1550 },
+      "topRight": { "x": 1750, "y": 1300 },
+      "bottomRight": { "x": 2050, "y": 2650 },
+      "bottomLeft": { "x": 1000, "y": 2900 }
+    },
+    "blendMode": "multiply",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": false,
+    "provenance": "estimated",
+    "provenanceNote": "Traced by eye off a flattened stock render with a pixel grid overlay. Not a Photopea Free Transform readout — re-derive before treating as trustworthy seed data.",
+    "active": false
+  },
+  {
+    "templateId": "fabric-tote-bag-shadows-active",
+    "category": "apparel",
+    "baseFile": "apparel/Free_Fabric_Tote_Bag_Mockup.png",
+    "overlayFile": null,
+    "sourceDimensions": [6000, 4500],
+    "logoZone": {
+      "topLeft": { "x": 1750, "y": 1450 },
+      "topRight": { "x": 3550, "y": 1450 },
+      "bottomRight": { "x": 3550, "y": 3850 },
+      "bottomLeft": { "x": 1750, "y": 3850 }
+    },
+    "blendMode": "multiply",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": false,
+    "provenance": "estimated",
+    "provenanceNote": "Traced by eye off a flattened stock render with a pixel grid overlay. Not a Photopea Free Transform readout — re-derive before treating as trustworthy seed data.",
+    "active": false
+  },
+  {
+    "templateId": "tote-bag-with-people-active",
+    "category": "apparel",
+    "baseFile": "apparel/Tote_Bag_Mockups_with_People.png",
+    "overlayFile": null,
+    "sourceDimensions": [3680, 2760],
+    "logoZone": {
+      "topLeft": { "x": 1150, "y": 900 },
+      "topRight": { "x": 2350, "y": 950 },
+      "bottomRight": { "x": 2300, "y": 2350 },
+      "bottomLeft": { "x": 1100, "y": 2300 }
+    },
+    "blendMode": "multiply",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": false,
+    "provenance": "estimated",
+    "provenanceNote": "Traced by eye off a flattened stock render with a pixel grid overlay. Not a Photopea Free Transform readout — re-derive before treating as trustworthy seed data.",
+    "active": false
+  },
+  {
+    "templateId": "hoodie-neck-label-active",
+    "category": "apparel",
+    "baseFile": "apparel/FREE-Hoodie-Label-Mockup_By-Mocku.png",
+    "overlayFile": null,
+    "sourceDimensions": [4000, 2671],
+    "logoZone": {
+      "topLeft": { "x": 1550, "y": 950 },
+      "topRight": { "x": 1850, "y": 900 },
+      "bottomRight": { "x": 1900, "y": 1250 },
+      "bottomLeft": { "x": 1600, "y": 1300 }
+    },
+    "blendMode": "multiply",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": false,
+    "provenance": "estimated",
+    "provenanceNote": "Traced by eye off a flattened stock render with a pixel grid overlay. Not a Photopea Free Transform readout — re-derive before treating as trustworthy seed data.",
+    "active": false
+  },
+  {
+    "templateId": "ios-app-icon-iphone17-active",
+    "category": "digital",
+    "baseFile": "digital/ios-app-icon-iphone-17-pro-mockup-on-gradient-background-v6-front-view.png",
+    "overlayFile": null,
+    "sourceDimensions": [3000, 3000],
+    "logoZone": {
+      "topLeft": { "x": 830, "y": 1020 },
+      "topRight": { "x": 1130, "y": 1020 },
+      "bottomRight": { "x": 1130, "y": 1330 },
+      "bottomLeft": { "x": 830, "y": 1330 }
+    },
+    "blendMode": "normal",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": false,
+    "provenance": "estimated",
+    "provenanceNote": "Traced by eye off a flattened stock render with a pixel grid overlay. Not a Photopea Free Transform readout — re-derive before treating as trustworthy seed data.",
+    "active": false
+  },
+  {
+    "templateId": "retro-tv-screen-active",
+    "category": "digital",
+    "baseFile": "digital/retro-tv-mockup.png",
+    "overlayFile": null,
+    "sourceDimensions": [3000, 2300],
+    "logoZone": {
+      "topLeft": { "x": 950, "y": 700 },
+      "topRight": { "x": 1850, "y": 700 },
+      "bottomRight": { "x": 1850, "y": 1550 },
+      "bottomLeft": { "x": 950, "y": 1550 }
+    },
+    "blendMode": "screen",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": false,
+    "provenance": "estimated",
+    "provenanceNote": "Traced by eye off a flattened stock render with a pixel grid overlay. Not a Photopea Free Transform readout — re-derive before treating as trustworthy seed data.",
+    "designNote": "Screen blend mode will wash out darker logo colors against this mid-gray CRT screen — test against an actual brand logo before shipping; multiply may read better for dark marks.",
+    "active": false
+  },
+  {
+    "templateId": "coffee-drip-pouch-active",
+    "category": "packaging",
+    "categoryNeedsReview": true,
+    "categoryNote": "Schema enum is apparel | stationery | digital | physical | environment — 'packaging' doesn't exist. Likely 'stationery' but confirm with El-Roy before seeding.",
+    "baseFile": "packaging/cofee.png",
+    "overlayFile": null,
+    "sourceDimensions": [3680, 2760],
+    "logoZone": {
+      "topLeft": { "x": 900, "y": 550 },
+      "topRight": { "x": 2050, "y": 500 },
+      "bottomRight": { "x": 2100, "y": 1750 },
+      "bottomLeft": { "x": 950, "y": 1800 }
+    },
+    "blendMode": "multiply",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": false,
+    "provenance": "estimated",
+    "provenanceNote": "Traced by eye off a flattened stock render with a pixel grid overlay. Not a Photopea Free Transform readout — re-derive before treating as trustworthy seed data.",
+    "active": false
+  },
+  {
+    "templateId": "sleeveless-shirt-active",
+    "category": "apparel",
+    "baseFile": "deferred/sleeveless-shirt-mockup.png",
+    "overlayFile": null,
+    "sourceDimensions": [2048, 2048],
+    "logoZone": null,
+    "blendMode": "normal",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": true,
+    "provenance": "n/a",
+    "provenanceNote": "Not applicable — this template requires the Displace Smart Filter per the source PSD (Authoring Pipeline §1, §6), which sharp cannot reproduce. Correctly excluded from placement data; do not backfill a flat quad. Seed with active:false regardless of this file's own active value, per §3's safety-net rule.",
+    "active": false
+  },
+  {
+    "templateId": "street-sign-outdoor-active",
+    "category": "signage",
+    "categoryNeedsReview": true,
+    "categoryNote": "Schema enum is apparel | stationery | digital | physical | environment — 'signage' doesn't exist. Likely 'environment' but confirm with El-Roy before seeding.",
+    "baseFile": null,
+    "overlayFile": null,
+    "sourceDimensions": null,
+    "logoZone": null,
+    "blendMode": "normal",
+    "layerOpacity": 100,
+    "layerFill": 100,
+    "requiresDisplacement": false,
+    "provenance": "missing_source",
+    "provenanceNote": "No matching source file was uploaded in this batch. Do not seed with placeholder coordinates — upload the real base image and derive real quad data before this entry is usable.",
+    "active": false
+  }
+]

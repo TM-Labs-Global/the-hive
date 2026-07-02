@@ -4,7 +4,8 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { DNASummaryCard } from "./dna-summary-card"
 import { BrandDNA } from "@/types/brand-dna"
-import { Download, Calendar, RefreshCw } from "lucide-react"
+import { Download, Calendar, RefreshCw, Sparkles, Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface ResultStepProps {
   dna: BrandDNA
@@ -16,6 +17,28 @@ interface ResultStepProps {
 
 export function ResultStep({ dna, id, brandName, faviconUrl, onRestart }: ResultStepProps) {
   const downloadUrl = `/api/brand-dna/download?id=${id}`
+  const [isInitiating, setIsInitiating] = React.useState(false)
+  const router = useRouter()
+
+  const handleGenerateVisualIdentity = async () => {
+    setIsInitiating(true)
+    try {
+      const res = await fetch(`/api/brand-dna/${id}/visual-identity`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      })
+      if (!res.ok) {
+        const json = await res.json()
+        throw new Error(json.error || "Failed to trigger visual identity generation.")
+      }
+      router.push(`/waitlist/${id}/visual-identity`)
+    } catch (error: any) {
+      console.error(error)
+      alert(error.message || "An error occurred.")
+    } finally {
+      setIsInitiating(false)
+    }
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-12 text-center relative z-10">
@@ -37,8 +60,24 @@ export function ResultStep({ dna, id, brandName, faviconUrl, onRestart }: Result
 
         <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
           <Button
-            asChild
+            onClick={handleGenerateVisualIdentity}
+            disabled={isInitiating}
             className="bg-brand hover:bg-brand-hover text-white font-black h-12 px-8 rounded-xl shadow-lg shadow-brand/20 flex items-center gap-2 transition-all active:scale-98"
+          >
+            {isInitiating ? (
+              <>
+                <Loader2 size={18} className="animate-spin" /> Preparing Guidelines...
+              </>
+            ) : (
+              <>
+                <Sparkles size={18} /> Generate your Visual Identity →
+              </>
+            )}
+          </Button>
+
+          <Button
+            asChild
+            className="h-12 px-8 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold flex items-center gap-2 transition-all active:scale-98"
           >
             <a href={downloadUrl} download>
               <Download size={18} /> Download Brand DNA (.md)
