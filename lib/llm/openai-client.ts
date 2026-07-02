@@ -78,11 +78,16 @@ export async function generateLogoMark(prompt: string, brandColor: string, brand
       throw new Error("No image data (b64_json or url) returned from OpenAI API")
     }
 
-    // Resize to standard 512x512, then A0.2 — remove white background to produce transparent PNG
-    const resized = await sharp(buffer).resize(512, 512).png().toBuffer()
-    const transparent = await removeWhiteBackground(resized)
-    console.log("Logo background removed — canonical transparent PNG ready.")
-    return transparent
+    // Try sharp resize + background removal — gracefully skip if binary unavailable on Vercel
+    try {
+      const resized = await sharp(buffer).resize(512, 512).png().toBuffer()
+      const transparent = await removeWhiteBackground(resized)
+      console.log("Logo background removed — canonical transparent PNG ready.")
+      return transparent
+    } catch (sharpErr) {
+      console.warn("[sharp] Processing failed (likely missing Vercel binary), returning raw OpenAI buffer:", sharpErr)
+      return buffer
+    }
   } catch (error) {
     console.error("Failed to generate logo via OpenAI (gpt-image-2), falling back to placeholder:", error)
     return generatePlaceholderLogo(brandName, brandColor)
@@ -125,7 +130,11 @@ export async function generateValuesImage(prompt: string, valueLabel: string, br
       throw new Error("No image data (b64_json or url) returned from OpenAI API")
     }
 
-    return sharp(buffer).resize(800, 600, { fit: "cover" }).toBuffer()
+    try {
+      return await sharp(buffer).resize(800, 600, { fit: "cover" }).toBuffer()
+    } catch {
+      return buffer
+    }
   } catch (error) {
     console.error(`Failed to generate values image ${index} via OpenAI (gpt-image-2), falling back:`, error)
     return generatePlaceholderValueImage(valueLabel, brandColor, index)
@@ -146,7 +155,12 @@ export async function generatePlaceholderLogo(brandName: string, brandColor: str
       <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="144" fill="#ffffff">${initials}</text>
     </svg>
   `
-  return sharp(Buffer.from(svg)).png().toBuffer()
+  try {
+    return await sharp(Buffer.from(svg)).png().toBuffer()
+  } catch {
+    // Return SVG as buffer if sharp unavailable
+    return Buffer.from(svg)
+  }
 }
 
 export async function generatePlaceholderValueImage(valueLabel: string, brandColor: string, index: number): Promise<Buffer> {

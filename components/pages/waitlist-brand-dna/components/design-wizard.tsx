@@ -68,6 +68,7 @@ export function DesignWizard({
   })
 
   const palette = React.useMemo(() => derivePalette(customColor), [customColor])
+  const [pollTimedOut, setPollTimedOut] = React.useState(false)
 
   // Load logo options & presets
   React.useEffect(() => {
@@ -98,7 +99,15 @@ export function DesignWizard({
         }
 
         setIsLoading(false)
+        let elapsed = 0
         pollInterval = setInterval(async () => {
+          elapsed += 4
+          // Give up after 90 seconds and show retry UI
+          if (elapsed >= 90) {
+            if (pollInterval) clearInterval(pollInterval)
+            setPollTimedOut(true)
+            return
+          }
           try {
             const pollRes = await fetch(`/api/brand-dna/${waitlistId}/logo-options`)
             if (!pollRes.ok) return
@@ -106,6 +115,7 @@ export function DesignWizard({
             if (pollJson.status === "ready" && pollJson.logoOptions?.length >= 3) {
               setLogoOptions(pollJson.logoOptions)
               setSelectedLogo(pollJson.logoOptions[0])
+              setPollTimedOut(false)
               if (pollInterval) clearInterval(pollInterval)
             }
           } catch {
@@ -235,8 +245,21 @@ export function DesignWizard({
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {logoOptions.length === 0
-              ? [0, 1, 2].map((idx) => (
+            {logoOptions.length === 0 ? (
+              pollTimedOut ? (
+                // Timed out — show retry state across all 3 cards
+                [0, 1, 2].map((idx) => (
+                  <div
+                    key={idx}
+                    className="relative aspect-square rounded-[2rem] bg-white/5 border-2 border-red-500/20 flex flex-col items-center justify-center gap-3 p-8"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400 text-xl">✗</div>
+                    <span className="text-[9px] text-red-400 font-bold uppercase tracking-widest text-center">Generation failed</span>
+                  </div>
+                ))
+              ) : (
+                // Skeleton cards while logos generate
+                [0, 1, 2].map((idx) => (
                   <div
                     key={idx}
                     className="relative aspect-square rounded-[2rem] bg-white/5 border-2 border-white/5 flex flex-col items-center justify-center gap-3 p-8 animate-pulse"
@@ -251,31 +274,34 @@ export function DesignWizard({
                     </div>
                   </div>
                 ))
-              : logoOptions.map((logo, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setSelectedLogo(logo)}
-                    className={`relative aspect-square rounded-[2rem] bg-white border-2 cursor-pointer transition-all duration-300 overflow-hidden flex items-center justify-center group p-8 ${
-                      selectedLogo === logo
-                        ? "border-brand shadow-lg shadow-brand/10 scale-[1.02]"
-                        : "border-zinc-100 hover:border-zinc-300 hover:scale-[1.01]"
-                    }`}
-                  >
-                    <img
-                      src={logo}
-                      alt={`Logo Option ${idx + 1}`}
-                      className="w-40 h-40 object-contain group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {selectedLogo === logo && (
-                      <div className="absolute top-4 right-4 bg-brand text-white p-1.5 rounded-full shadow-md">
-                        <Check size={14} className="stroke-[3]" />
-                      </div>
-                    )}
-                    <span className="absolute bottom-4 left-4 text-[9px] uppercase font-black tracking-widest text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded">
-                      Option {idx + 1}
-                    </span>
-                  </div>
-                ))}
+              )
+            ) : (
+              logoOptions.map((logo, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setSelectedLogo(logo)}
+                  className={`relative aspect-square rounded-[2rem] bg-white border-2 cursor-pointer transition-all duration-300 overflow-hidden flex items-center justify-center group p-8 ${
+                    selectedLogo === logo
+                      ? "border-brand shadow-lg shadow-brand/10 scale-[1.02]"
+                      : "border-zinc-100 hover:border-zinc-300 hover:scale-[1.01]"
+                  }`}
+                >
+                  <img
+                    src={logo}
+                    alt={`Logo Option ${idx + 1}`}
+                    className="w-40 h-40 object-contain group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {selectedLogo === logo && (
+                    <div className="absolute top-4 right-4 bg-brand text-white p-1.5 rounded-full shadow-md">
+                      <Check size={14} className="stroke-[3]" />
+                    </div>
+                  )}
+                  <span className="absolute bottom-4 left-4 text-[9px] uppercase font-black tracking-widest text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded">
+                    Option {idx + 1}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Upload Area */}
@@ -298,6 +324,47 @@ export function DesignWizard({
             <span className="text-sm font-bold text-white">Upload custom logo mark</span>
             <span className="text-xs text-zinc-400">Supports transparent PNG or SVG</span>
           </div>
+
+          {/* Retry banner on timeout */}
+          {pollTimedOut && (
+            <div className="flex items-center justify-between gap-4 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+              <div>
+                <p className="text-sm font-bold text-red-400">Logo generation timed out</p>
+                <p className="text-xs text-zinc-400 mt-0.5">You can retry, or upload your own logo mark above.</p>
+              </div>
+              <Button
+                onClick={async () => {
+                  setPollTimedOut(false)
+                  // Clear DB logoOptions and re-trigger generation
+                  await fetch(`/api/brand-dna/${waitlistId}/logo-options`, { method: "POST" })
+                  let elapsed = 0
+                  const iv = setInterval(async () => {
+                    elapsed += 4
+                    if (elapsed >= 90) { clearInterval(iv); setPollTimedOut(true); return }
+                    const r = await fetch(`/api/brand-dna/${waitlistId}/logo-options`).catch(() => null)
+                    if (!r?.ok) return
+                    const j = await r.json()
+                    if (j.status === "ready" && j.logoOptions?.length >= 3) {
+                      setLogoOptions(j.logoOptions)
+                      setSelectedLogo(j.logoOptions[0])
+                      setPollTimedOut(false)
+                      clearInterval(iv)
+                    }
+                  }, 4000)
+                }}
+                className="bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 font-bold h-9 px-5 rounded-xl text-sm flex-shrink-0"
+              >
+                Retry Generation
+              </Button>
+            </div>
+          )}
+
+          {/* Hint while loading */}
+          {logoOptions.length === 0 && !pollTimedOut && (
+            <p className="text-[11px] text-zinc-600 text-center">
+              Logo generation takes ~60s. You can upload your own while waiting.
+            </p>
+          )}
 
           <div className="flex justify-end pt-4">
             <Button
