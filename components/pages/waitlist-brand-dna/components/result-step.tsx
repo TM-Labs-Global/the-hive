@@ -27,8 +27,13 @@ export function ResultStep({ dna, id, brandName, faviconUrl, onRestart }: Result
 
   if (showWizard) {
     return (
-      <div className="w-full text-foreground [--foreground:#131313] [--muted-foreground:#6B6B6B] [--border:#E8E8E8] [--muted:#F4F4F4] [--card:#ffffff] [--card-foreground:#131313] [--background:#f9f9f9]">
-        <DesignWizard waitlistId={id} onBackToDna={() => setShowWizard(false)} />
+      <div className="w-full">
+        <DesignWizard
+          waitlistId={id}
+          brandName={brandName}
+          tagline={dna.tagline || ""}
+          onBackToDna={() => setShowWizard(false)}
+        />
       </div>
     )
   }
