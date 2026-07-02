@@ -93,7 +93,11 @@ export async function POST(
 
     // Upstash QStash Trigger
     const qstashToken = process.env.QSTASH_TOKEN
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    
+    // Dynamically resolve app base URL from request headers to prevent ECONNREFUSED on Vercel
+    const host = req.headers.get("host")
+    const protocol = host?.includes("localhost") ? "http" : "https"
+    const appUrl = host ? `${protocol}://${host}` : (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")
 
     if (qstashToken && qstashToken !== "dummy_token") {
       try {
